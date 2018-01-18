@@ -1,24 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0
+// SPDX-License-Identifier: MIT
 /*
  * Copyright (c) 2017 Andrea Loi                                                *
  */
 
 #include "regs.h"
 
-void ResetHandler(void); // This is the first function to be executed.
-void Halt(void);         // This function just runs an infinite loop.
+void reset_handler(void); // This is the first function to be executed.
 extern int main(void);   // ResetHandler will call main after initialization.
+
+void halt(void) __attribute__ ((noreturn));
+void halt(void)
+{
+	for(;;) {}
+}
 
 // *****************************************************************************
 // * Define what to do if the cpu receives an interrupt for a peripheral that  *
 // * doesn't exist. This doesn't make sense and it should never happen.        *
 // *****************************************************************************
-#define ISR_NOT_IMPL ((uint32_t *) Halt)
+#define ISR_NOT_IMPL ((uint32_t *) halt)
 
 // *****************************************************************************
 // * Define the default interrupt function.                                    *
 // *****************************************************************************
-#define ISR_NOT_SET ((uint32_t *) Halt)
+#define ISR_NOT_SET ((uint32_t *) halt)
 
 // *****************************************************************************
 // * Define where the stack starts.                                            *
@@ -37,7 +42,7 @@ extern int main(void);   // ResetHandler will call main after initialization.
 uint32_t (* const vectortable[]) __attribute__ ((section(".isrvectors"))) = {
   /* Function Pointer                  Name              Addr    IRQn  EXn */
   (uint32_t *) STACK_START_ADDR,    /* SP                0x0000  N/A   N/A */
-  (uint32_t *) ResetHandler,        /* Reset             0x0004  N/A     1 */
+  (uint32_t *) reset_handler,       /* Reset             0x0004  N/A     1 */
   ISR_NOT_SET,                      /* NMI               0x0008  -14     2 */
   ISR_NOT_SET,                      /* HardFault         0x000C  -13     3 */
   ISR_NOT_SET,                      /* MemManage         0x0010  -12     4 */
@@ -122,8 +127,86 @@ uint32_t (* const vectortable[]) __attribute__ ((section(".isrvectors"))) = {
   ISR_NOT_IMPL                      /* OTG_FS            0x014C   67    83 */
 };
 
-void ResetHandler(void) __attribute__ ((noreturn));
-void ResetHandler(void)
+static void gpio_setup(struct GPIO *gpio, unsigned int bit, uint32_t flags)
+{
+	volatile uint32_t *cr;
+	uint32_t v;
+
+	if (bit >= 8) {
+		cr = &gpio->CRH;
+		bit -= 8;
+	} else {
+		cr = &gpio->CRL;
+	}
+
+	v = *cr;
+	v &= 0xf << (bit * 4);
+	v |= (0xf & flags) << (bit * 4);
+	*cr = v;
+}
+
+#define RCC_CR_HSION		(1 << 0)
+#define RCC_CR_HSIRDY		(1 << 1)
+#define RCC_CR_HSITRIM_SHIFT	3
+#define RCC_CR_HSICAL_SHIFT	8
+#define RCC_CR_HSEON		(1 << 16)
+#define RCC_CR_HSERDY		(1 << 17)
+#define RCC_CR_HSEBYP		(1 << 18)
+#define RCC_CR_CSSON		(1 << 19)
+#define RCC_CR_PLLON		(1 << 24)
+#define RCC_CR_PLLRDY		(1 << 25)
+#define RCC_CR_PLL2ON		(1 << 26)
+#define RCC_CR_PLL2RDY		(1 << 27)
+#define RCC_CR_PLL3ON		(1 << 28)
+#define RCC_CR_PLL3RDY		(1 << 29)
+
+
+#define RCC_CFGR_SW_SHIFT	0
+#define  RCC_CFGR_SW_HSI	(0 << RCC_CFGR_SW_SHIFT)
+#define  RCC_CFGR_SW_HSE	(1 << RCC_CFGR_SW_SHIFT)
+#define  RCC_CFGR_SW_PLL	(2 << RCC_CFGR_SW_SHIFT)
+#define RCC_CFGR_SWS_SHIFT	2
+#define RCC_CFGR_HPRE_SHIFT	4
+#define RCC_CFGR_PPRE1_SHIFT	8
+#define  RCC_CFGR_PPRE1_div2	(4 << RCC_CFGR_PPRE1_SHIFT)
+#define RCC_CFGR_PPRE2_SHIFT	11
+#define RCC_CFGR_ADC_PRE_SHIFT	14
+#define RCC_CFGR_PLL_SRC	(1 << 16)
+#define RCC_CFGR_PLL_XTPRE	(1 << 17)
+#define RCC_CFGR_PLLMUL_SHIFT	18
+#define  RCC_CFGR_PLLMUL_x9	(0xf << RCC_CFGR_PLLMUL_SHIFT)
+#define RCC_CFGR_OTGFS_PRE	(1 << 22)
+#define RCC_CFGR_MCO_SHIFT	24
+
+#define FLASH_ACR_LATENCY_SHIFT	0
+#define FLASH_ACR_HLFCYA	(1 << 3)
+#define FLASH_ACR_PRFTBE	(1 << 4)
+#define FLASH_ACR_PRFTBS	(1 << 5)
+
+static void rcc_init(void)
+{
+	RCC->CFGR = RCC_CFGR_PLL_SRC | RCC_CFGR_PLLMUL_x9 | RCC_CFGR_SW_HSI | RCC_CFGR_PPRE1_div2;
+	RCC->CR = RCC_CR_HSION | RCC_CR_HSEON | (0x10 << RCC_CR_HSITRIM_SHIFT) | RCC_CR_PLLON;
+	while (!(RCC->CR & RCC_CR_PLLRDY))
+		;
+	FLASH->ACR = FLASH_ACR_PRFTBE | (2 << FLASH_ACR_LATENCY_SHIFT);
+	RCC->CFGR = RCC_CFGR_PLL_SRC | RCC_CFGR_PLLMUL_x9 | RCC_CFGR_SW_PLL | RCC_CFGR_PPRE1_div2;
+	RCC->APB2ENR |= (1 << 2) | (1 << 3) | (1 << 4) | (1 << 14);
+}
+
+static void uart1_init(void)
+{
+	gpio_setup(GPIOA, 9, 3 | 8);
+
+	USART1->CR1 = 0x340c;
+	USART1->CR2 = 0;
+	USART1->CR3 = 0;
+	USART1->GTPR = 0;
+	USART1->BRR = 72000000;
+}
+
+void reset_handler(void) __attribute__ ((noreturn));
+void reset_handler(void)
 {
 	extern char _sdata;    // .data section start
 	extern char _edata;    // .data section end
@@ -143,15 +226,9 @@ void ResetHandler(void)
 	/* clear uninitialized variables */
 	for ( dst = &_sbss; dst < &_ebss; dst++ ) { *dst = 0; }
 
+	rcc_init();
+	uart1_init();
+
 	main();
-
-	for(;;) {}
+	halt();
 }
-
-void Halt(void) __attribute__ ((noreturn));
-void Halt(void)
-{
-	for(;;) {}
-}
-
-

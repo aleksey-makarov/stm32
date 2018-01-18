@@ -37,7 +37,7 @@ _stack_size =         0x00000400;
 
 _isrvectors_tend =    0x00000150;
 
-ENTRY(ResetHandler)
+ENTRY(reset_handler)
 
 MEMORY {
   FLASH (RX) : ORIGIN = 0x08000000, LENGTH = 0x10000

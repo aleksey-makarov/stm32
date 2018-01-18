@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0
+// SPDX-License-Identifier: MIT
 /*
  * Copyright (c) 2017 Andrea Loi                                                *
  */
@@ -19,7 +19,7 @@ struct SIG {
 	volatile uint16_t U_ID_79_64;
 };
 
-struct TIM2 {
+struct TIM {
 	volatile uint32_t CR1;
 	volatile uint32_t CR2;
 	volatile uint32_t SMCR;
@@ -294,29 +294,6 @@ struct ADC {
 	volatile uint32_t JDR3;
 	volatile uint32_t JDR4;
 	volatile uint32_t DR;
-};
-
-struct TIM {
-	volatile uint32_t CR1;
-	volatile uint32_t CR2;
-	volatile uint32_t SMCR;
-	volatile uint32_t DIER;
-	volatile uint32_t SR;
-	volatile uint32_t EGR;
-	volatile uint32_t CCMR1;
-	volatile uint32_t CCMR2;
-	volatile uint32_t CCER;
-	volatile uint32_t CNT;
-	volatile uint32_t PSC;
-	volatile uint32_t ARR;
-	volatile uint32_t RCR;
-	volatile uint32_t CCR1;
-	volatile uint32_t CCR2;
-	volatile uint32_t CCR3;
-	volatile uint32_t CCR4;
-	volatile uint32_t BDTR;
-	volatile uint32_t DCR;
-	volatile uint32_t DMAR;
 };
 
 struct DMA {
