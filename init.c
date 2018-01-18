@@ -26,7 +26,6 @@
 ********************************************************************************
 */
 
-#include "common.h"
 #include "regs.h"
 
 
@@ -180,7 +179,7 @@ __attribute__ ((noreturn)) void ResetHandler(void){
   char *src = &_ldata;
   
   // enable 8-byte stack alignment to comply with AAPCS
-  BIT_SET(SCB->CCR, BIT_9);
+  SCB->CCR |= 1 << 9;
   
   // copy initialized variables data
   while ( dst < &_edata ) { *dst++ = *src++; }
