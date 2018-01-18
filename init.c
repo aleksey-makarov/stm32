@@ -1,40 +1,13 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
-********************************************************************************
-*                                                                              *
-* Copyright (c) 2017 Andrea Loi                                                *
-*                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a      *
-* copy of this software and associated documentation files (the "Software"),   *
-* to deal in the Software without restriction, including without limitation    *
-* the rights to use, copy, modify, merge, publish, distribute, sublicense,     *
-* and/or sell copies of the Software, and to permit persons to whom the        *
-* Software is furnished to do so, subject to the following conditions:         *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included      *
-* in all copies or substantial portions of the Software.                       *
-*                                                                              *
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR   *
-* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,     *
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL      *
-* THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER   *
-* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING      *
-* FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER          *
-* DEALINGS IN THE SOFTWARE.                                                    *
-*                                                                              *
-********************************************************************************
-* This file contains the interrupt vector table and the reset handler code.    *
-********************************************************************************
-*/
+ * Copyright (c) 2017 Andrea Loi                                                *
+ */
 
 #include "regs.h"
-
-
 
 void ResetHandler(void); // This is the first function to be executed.
 void Halt(void);         // This function just runs an infinite loop.
 extern int main(void);   // ResetHandler will call main after initialization.
-
-
 
 // *****************************************************************************
 // * Define what to do if the cpu receives an interrupt for a peripheral that  *
@@ -42,14 +15,10 @@ extern int main(void);   // ResetHandler will call main after initialization.
 // *****************************************************************************
 #define ISR_NOT_IMPL ((uint32_t *) Halt)
 
-
-
 // *****************************************************************************
 // * Define the default interrupt function.                                    *
 // *****************************************************************************
 #define ISR_NOT_SET ((uint32_t *) Halt)
-
-
 
 // *****************************************************************************
 // * Define where the stack starts.                                            *
@@ -61,8 +30,6 @@ extern int main(void);   // ResetHandler will call main after initialization.
 // * the stack will be at address 0x20004FFF.                                  *
 // *****************************************************************************
 #define STACK_START_ADDR 0x20005000
-
-
 
 // *****************************************************************************
 // * Set the vector table and store it in the .isrvectors section.             *
@@ -155,52 +122,36 @@ uint32_t (* const vectortable[]) __attribute__ ((section(".isrvectors"))) = {
   ISR_NOT_IMPL                      /* OTG_FS            0x014C   67    83 */
 };
 
+void ResetHandler(void) __attribute__ ((noreturn));
+void ResetHandler(void)
+{
+	extern char _sdata;    // .data section start
+	extern char _edata;    // .data section end
+	extern char _sbss;     // .bss  section start
+	extern char _ebss;     // .bss  section end
+	extern char _ldata;    // .data load address
 
+	char *dst = &_sdata;
+	char *src = &_ldata;
 
-// *****************************************************************************
-// * This is the first function that is executed after a reset.                *
-// * 1. It selects the debug interface.                                        *
-// * 2. It sets the stack alignment.                                           *
-// * 3. It copies the initialized variables data from flash to RAM.            *
-// * 4. It clears the uninitialized variables.                                 *
-// * 5. It calls main.                                                         *
-// * 6. It halts if main returns.                                              *
-// *****************************************************************************
-// *        DON'T EDIT THIS FUNCTION UNLESS YOU KNOW WHAT YOU'RE DOING!        *
-// *****************************************************************************
-__attribute__ ((noreturn)) void ResetHandler(void){
-  extern char _sdata;    // .data section start
-  extern char _edata;    // .data section end
-  extern char _sbss;     // .bss  section start
-  extern char _ebss;     // .bss  section end
-  extern char _ldata;    // .data load address
-  
-  char *dst = &_sdata;
-  char *src = &_ldata;
-  
-  // enable 8-byte stack alignment to comply with AAPCS
-  SCB->CCR |= 1 << 9;
-  
-  // copy initialized variables data
-  while ( dst < &_edata ) { *dst++ = *src++; }
-  
-  // clear uninitialized variables
-  for ( dst = &_sbss; dst < &_ebss; dst++ ) { *dst = 0; }
-  
-  // call main
-  main();
-  
-  // halt
-  for(;;) {}
+	/* enable 8-byte stack alignment to comply with AAPCS */
+	SCB->CCR |= 1 << 9;
+
+	/* copy initialized variables data */
+	while ( dst < &_edata ) { *dst++ = *src++; }
+
+	/* clear uninitialized variables */
+	for ( dst = &_sbss; dst < &_ebss; dst++ ) { *dst = 0; }
+
+	main();
+
+	for(;;) {}
 }
 
-
-
-// *****************************************************************************
-// * Halt the program.                                                         *
-// *****************************************************************************
-__attribute__ ((noreturn)) void Halt(void){
-  for(;;) {}
+void Halt(void) __attribute__ ((noreturn));
+void Halt(void)
+{
+	for(;;) {}
 }
 
 
