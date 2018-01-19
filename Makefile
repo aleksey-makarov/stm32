@@ -18,14 +18,14 @@ CFLAGS  = $(MCPU) -O0 -ggdb -ffreestanding -Wall -Wextra
 LDFLAGS = $(MCPU)     -ggdb -static -nostdlib -TSTM32F103C8.ld -L.
 LDLIBS  = -lgcc -lstm
 
-ELFS = test01 test02
+ELFS = test01_uart_putc test02_uart_inout
 BINS = $(addsuffix .bin, $(ELFS))
 
 .PHONY: all clean
 
 all: $(BINS)
 
-libstm.a: init.o
+libstm.a: init.o rcc.o gpio.o uart.o
 	$(AR) rcs $@ $^
 
 $(ELFS) : libstm.a
