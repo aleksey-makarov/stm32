@@ -21,7 +21,6 @@
 
 void uart_init(void)
 {
-	// USART1->CR1 = 0x340c; // 0011 0100 0000 1100
 	USART1->CR1 = USART_CR_UE | USART_CR_TE | USART_CR_RE;
 	USART1->CR2 = 0;
 	USART1->CR3 = 0;
