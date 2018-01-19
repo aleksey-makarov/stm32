@@ -1,5 +1,5 @@
 #include <stdarg.h>
-#include "uart.h"
+#include "../uart.h"
 
 int putchar(int c)
 {

@@ -1,0 +1,3 @@
+LIBBSD_SRCS = printf.c stdio.c strchr.c strlen.c memcpy.c memcmp.c memmove.c memchr.c strnlen.c bzero.c memset.c
+LIBBSD_OBJS = $(LIBBSD_SRCS:%.c=%.o)
+

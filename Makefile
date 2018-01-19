@@ -25,7 +25,10 @@ BINS = $(addsuffix .bin, $(ELFS))
 
 all: $(BINS)
 
-libstm.a: init.o rcc.o gpio.o uart.o stdio.o printf.o memchr.o strlen.o
+include ./libbsd/Makefile.libbsd
+LIBBSD_OBJS_P=$(addprefix ./libbsd/, $(LIBBSD_OBJS))
+
+libstm.a: $(LIBBSD_OBJS_P) init.o rcc.o gpio.o uart.o
 	$(AR) rcs $@ $^
 
 $(ELFS) : libstm.a
@@ -43,4 +46,4 @@ $(ELFS) : libstm.a
 	$(SIZE) $< > $@
 
 clean:
-	$(RM) -f *.o *.a *.bin *.size *.dis *.lst $(ELFS)
+	$(RM) -f *.o *.a *.bin *.size *.dis *.lst $(ELFS) ./libbsd/*.o

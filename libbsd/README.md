@@ -1,0 +1,1 @@
+These are mostly from freebsd/lib/libc/string
