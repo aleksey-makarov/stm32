@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2017 Andrea Loi
-# Copyright (c) 2018 Alekey Makarov
+# Copyright (c) 2018 Aleksey Makarov
 
 CROSS_COMPILE = arm-none-eabi-
 
@@ -21,7 +21,7 @@ LDLIBS  = -lgcc -lstm
 ELFS = test01 test02
 BINS = $(addsuffix .bin, $(ELFS))
 
-.PHONY: all
+.PHONY: all clean
 
 all: $(BINS)
 
