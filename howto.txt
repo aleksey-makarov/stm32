@@ -1,2 +1,2 @@
-st-flash write test01.bin 0x8000000
-arm-none-eabi-gdb -x ./commands.gdb ./test01
+st-flash write test03_stdio.bin 0x8000000
+arm-none-eabi-gdb -x ./commands.gdb ./test03_stdio

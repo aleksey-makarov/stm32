@@ -11,6 +11,6 @@ int main(void)
 	putchar('\n');
 
 	while(1) {
-		printf("%d: lalala\n", i++);
+		printf("%d: lalala\r", i++);
 	}
 }
