@@ -4,6 +4,7 @@
 #include "i2c.h"
 #include <stdio.h>
 #include "mtrace.h"
+#include "rcc.h"
 
 #define I2C_CR1_PE		(1 << 0)
 #define I2C_CR1_SMBUS		(1 << 1)
@@ -97,7 +98,7 @@ static int write_register(uint8_t address, uint8_t reg, uint8_t v)
 
 	I2C1->CR1 |= I2C_CR1_STOP;
 
-	MTRACE("+");
+	MTRACE("-");
 	return 0;
 }
 
@@ -119,7 +120,6 @@ static int write_register(uint8_t address, uint8_t reg, uint8_t v)
 	((I2C_SPEED_FAST((__PCLK__), (__SPEED__), (__DUTYCYCLE__)) & I2C_CCR_CCR) == 0U)? 1U : \
 	((I2C_SPEED_FAST((__PCLK__), (__SPEED__), (__DUTYCYCLE__))) | I2C_CCR_FS))
 
-#define APB1_FREQ 32000000
 #define I2C_FREQ  50000
 
 static int test_address(uint8_t address)
@@ -136,9 +136,9 @@ static int test_address(uint8_t address)
 	I2C1->CR1 &= ~I2C_CR1_SWRST;
 
 	MTRACE("initialize i2c");
-	I2C1->CR2 = I2C_FREQRANGE(APB1_FREQ);
-	I2C1->TRISE = I2C_RISE_TIME(I2C_FREQRANGE(APB1_FREQ), I2C_FREQ);
-	I2C1->CCR = I2C_SPEED(APB1_FREQ, I2C_FREQ, I2C_DUTYCYCLE_2);
+	I2C1->CR2 = I2C_FREQRANGE(RCC_APB1_FREQ);
+	I2C1->TRISE = I2C_RISE_TIME(I2C_FREQRANGE(RCC_APB1_FREQ), I2C_FREQ);
+	I2C1->CCR = I2C_SPEED(RCC_APB1_FREQ, I2C_FREQ, I2C_DUTYCYCLE_2);
 
 	MTRACE("enable i2c");
 	I2C1->CR1 |= I2C_CR1_PE;

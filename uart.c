@@ -1,5 +1,6 @@
 #include "regs.h"
 #include "uart.h"
+#include "rcc.h"
 
 #define USART_SR_TXE	(1 << 7)
 #define USART_SR_RXNE	(1 << 5)
@@ -25,7 +26,7 @@ void uart_init(void)
 	USART1->CR2 = 0;
 	USART1->CR3 = 0;
 	USART1->GTPR = 0;
-	USART1->BRR = 72000000 / 115200;
+	USART1->BRR = RCC_APB2_FREQ / 115200;
 }
 
 void uart_putc(char c)
