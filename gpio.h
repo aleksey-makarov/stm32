@@ -1,6 +1,8 @@
 #ifndef __gpio_h__
 #define __gpio_h__
 
+#include <stdbool.h>
+
 #define GPIO_MODE_IN        0
 #define GPIO_MODE_OUT_10MHz 1
 #define GPIO_MODE_OUT_2MHz  2
@@ -15,5 +17,7 @@
 #define GPIO_CNF_OUT_ALT_OPEN	(3 << 2)
 
 void gpio_setup(struct GPIO *gpio, unsigned int bit, uint32_t mode);
+void gpio_out(struct GPIO *gpio, unsigned int bit, bool value);
+bool gpio_in(struct GPIO *gpio, unsigned int bit);
 
 #endif

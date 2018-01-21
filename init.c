@@ -160,9 +160,12 @@ void reset_handler(void)
 	gpio_setup(GPIOA,  9, GPIO_MODE_OUT_50MHz | GPIO_CNF_OUT_ALT_PULL);
 	gpio_setup(GPIOA, 10, GPIO_MODE_IN | GPIO_CNF_IN_PULL);
 
-	/* UART1 gpios */
-	gpio_setup(GPIOB,  6, GPIO_MODE_OUT_50MHz | GPIO_CNF_OUT_ALT_PULL);
-	gpio_setup(GPIOB,  7, GPIO_MODE_OUT_50MHz | GPIO_CNF_OUT_ALT_PULL);
+	/* I2C gpios */
+	gpio_setup(GPIOB,  6, GPIO_MODE_OUT_50MHz | GPIO_CNF_OUT_ALT_OPEN);
+	gpio_setup(GPIOB,  7, GPIO_MODE_OUT_50MHz | GPIO_CNF_OUT_ALT_OPEN);
+
+	/* LED gpio */
+	gpio_setup(GPIOC, 13, GPIO_MODE_OUT_50MHz | GPIO_CNF_OUT_GPIO_OPEN);
 
 	uart_init();
 
