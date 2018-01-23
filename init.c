@@ -5,14 +5,43 @@
 
 #include "regs.h"
 #include "gpio.h"
+#include "dwt.h"
 
 void reset_handler(void); // This is the first function to be executed.
 extern int main(void);   // ResetHandler will call main after initialization.
 
+static void blink(int status) __attribute__ ((noreturn));
+static void blink(int status)
+{
+	uint32_t ts;
+	dwt_enable();
+
+	while (1) {
+		ts = dwt_get_cycles();
+		gpio_out(GPIOC, 13, status);
+		while (dwt_ms_since(ts) < 100)
+			;
+		gpio_out(GPIOC, 13, !status);
+		while (dwt_ms_since(ts) < 1000)
+			;
+	}
+}
+
 void halt(void) __attribute__ ((noreturn));
 void halt(void)
 {
-	for(;;) {}
+	uint32_t ts;
+	dwt_enable();
+
+	while (1) {
+		ts = dwt_get_cycles();
+		gpio_out(GPIOC, 13, 1);
+		while (dwt_ms_since(ts) < 100)
+			;
+		gpio_out(GPIOC, 13, 0);
+		while (dwt_ms_since(ts) < 1000)
+			;
+	}
 }
 
 // *****************************************************************************
@@ -169,6 +198,5 @@ void reset_handler(void)
 
 	uart_init();
 
-	main();
-	halt();
+	blink(main());
 }

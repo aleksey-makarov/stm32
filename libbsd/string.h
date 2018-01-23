@@ -1,7 +1,7 @@
 #ifndef __string_h__
 #define __string_h__
 
-#include <stdlib.h>
+#include <stddef.h>
 
 char *strchr(const char *s, int c);
 size_t strlen(const char *s);

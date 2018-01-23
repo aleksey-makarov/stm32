@@ -14,12 +14,12 @@ AR      = $(CROSS_COMPILE)ar
 
 MCPU = -mcpu=cortex-m3 -mthumb -mabi=aapcs
 
-CFLAGS  = $(MCPU) -O0 -ggdb -ffreestanding -Wall -Wextra
+CFLAGS  = $(MCPU) -O0 -ggdb -ffreestanding -Wall -Wextra -I./libbsd
 LDFLAGS = $(MCPU)     -ggdb -static -nostdlib -TSTM32F103C8.ld -L.
 LDLIBS  = -lgcc -lstm
 
 # tests (programs)
-ELFS = test01_uart_putc test02_uart_inout test03_stdio test04_i2c test05_blink
+ELFS = test01_uart_putc test02_uart_inout test03_stdio test04_i2c test05_blink test06_dwt
 BINS = $(addsuffix .bin, $(ELFS))
 
 .PHONY: all clean
@@ -30,7 +30,7 @@ include ./libbsd/Makefile.libbsd
 LIBBSD_OBJS_P=$(addprefix ./libbsd/, $(LIBBSD_OBJS))
 
 # functions that may be shared between tests
-libstm.a: $(LIBBSD_OBJS_P) init.o rcc.o gpio.o uart.o # i2c.o
+libstm.a: $(LIBBSD_OBJS_P) init.o rcc.o gpio.o uart.o dwt.o # i2c.o
 	$(AR) rcs $@ $^
 
 $(ELFS) : libstm.a
