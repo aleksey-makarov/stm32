@@ -3,7 +3,7 @@
  * Copyright (c) 2017 Andrea Loi                                                *
  */
 
-#include "regs.h"
+#include <stdint.h>
 #include "gpio.h"
 #include "dwt.h"
 
@@ -159,6 +159,26 @@ uint32_t (* const vectortable[]) __attribute__ ((section(".isrvectors"))) = {
 
 void rcc_init(void);
 void uart_init(void);
+
+struct SCB {
+	volatile uint32_t CPUID;
+	volatile uint32_t ICSR;
+	volatile uint32_t VTOR;
+	volatile uint32_t AIRCR;
+	volatile uint32_t SCR;
+	volatile uint32_t CCR;
+	volatile uint32_t SHPR1;
+	volatile uint32_t SHPR2;
+	volatile uint32_t SHPR3;
+	volatile uint32_t SHCRS;
+	volatile uint32_t CFSR;
+	volatile uint32_t HFSR;
+	volatile uint32_t RESERVED_1;
+	volatile uint32_t MMAR;
+	volatile uint32_t BFAR;
+};
+
+#define SCB ((struct SCB *)0xe000ed00)
 
 void reset_handler(void) __attribute__ ((noreturn));
 void reset_handler(void)

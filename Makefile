@@ -30,7 +30,7 @@ include ./libbsd/Makefile.libbsd
 LIBBSD_OBJS_P=$(addprefix ./libbsd/, $(LIBBSD_OBJS))
 
 # functions that may be shared between tests
-libstm.a: $(LIBBSD_OBJS_P) init.o rcc.o gpio.o uart.o dwt.o # i2c.o
+libstm.a: $(LIBBSD_OBJS_P) init.o rcc.o gpio.o uart.o dwt.o i2c.o
 	$(AR) rcs $@ $^
 
 $(ELFS) : libstm.a

@@ -1,4 +1,60 @@
-#include "regs.h"
+#include "rcc.h"
+#include <stdint.h>
+
+struct RCC {
+	volatile uint32_t CR;
+	volatile uint32_t CFGR;
+	volatile uint32_t CIR;
+	volatile uint32_t APB2RSTR;
+	volatile uint32_t APB1RSTR;
+	volatile uint32_t AHBENR;
+	volatile uint32_t APB2ENR;
+	volatile uint32_t APB1ENR;
+	volatile uint32_t BDCR;
+	volatile uint32_t CSR;
+};
+
+struct RCC_BB {
+	volatile uint32_t CR[32];
+	volatile uint32_t CFGR[32];
+	volatile uint32_t CIR[32];
+	volatile uint32_t APB2RSTR[32];
+	volatile uint32_t APB1RSTR[32];
+	volatile uint32_t AHBENR[32];
+	volatile uint32_t APB2ENR[32];
+	volatile uint32_t APB1ENR[32];
+	volatile uint32_t BDCR[32];
+	volatile uint32_t CSR[32];
+};
+
+struct FLASH {
+	volatile uint32_t ACR;
+	volatile uint32_t KEYR;
+	volatile uint32_t OPTKEYR;
+	volatile uint32_t SR;
+	volatile uint32_t CR;
+	volatile uint32_t AR;
+	volatile uint32_t RESERVED_1;
+	volatile uint32_t OBR;
+	volatile uint32_t WRPR;
+};
+
+struct FLASH_BB {
+	volatile uint32_t ACR[32];
+	volatile uint32_t KEYR[32];
+	volatile uint32_t OPTKEYR[32];
+	volatile uint32_t SR[32];
+	volatile uint32_t CR[32];
+	volatile uint32_t AR[32];
+	volatile uint32_t RESERVED_1[32];
+	volatile uint32_t OBR[32];
+	volatile uint32_t WRPR[32];
+};
+
+#define RCC		((struct RCC *)0x40021000)
+#define RCC_BB		((struct RCC_BB *)0x42420000)
+#define FLASH		((struct FLASH *)0x40022000)
+#define FLASH_BB	((struct FLASH_BB *)0x42440000)
 
 #define RCC_CR_HSION		(1 << 0)
 #define RCC_CR_HSIRDY		(1 << 1)
