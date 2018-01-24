@@ -85,11 +85,11 @@ static uint8_t * const scrbuf = scrbuf_cmd + 1;
 int _sendTWIcommand(uint8_t cmd) {
 	int err;
 	uint8_t v[2] = { 0, cmd };
-	uint32_t ts;
+	// uint32_t ts;
 
-	ts = dwt_get_cycles();
+	// ts = dwt_get_cycles();
 	err = i2c_write(0x3c, v, 2);
-	MTRACE("cmd: 0x%02x, time: %d ms", (unsigned int)cmd, dwt_ms_since(ts));
+	// MTRACE("cmd: 0x%02x, time: %d ms", (unsigned int)cmd, dwt_ms_since(ts));
 
 	return err;
 }
@@ -111,14 +111,14 @@ uint8_t update_cmds[] = {
 
 void oled_update(void)
 {
-	uint32_t ts;
-	int err;
+	// uint32_t ts;
+	// int err;
 
 	send_commands(update_cmds, SIZEOF(update_cmds));
 
-	ts = dwt_get_cycles();
-	err = i2c_write(0x3c, scrbuf_cmd, SCRBUF_CMD_SIZE);
-	MTRACE("update buffer: err: %d, time: %d ms", err, dwt_ms_since(ts));
+	// ts = dwt_get_cycles();
+	i2c_write(0x3c, scrbuf_cmd, SCRBUF_CMD_SIZE);
+	// MTRACE("update buffer: err: %d, time: %d ms", err, dwt_ms_since(ts));
 }
 
 uint8_t init_cmds[] = {

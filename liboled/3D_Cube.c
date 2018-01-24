@@ -40,118 +40,251 @@
 // pull-up resistors on the data and clock signals.
 //
 
-#include <OLED_I2C.h>
+#include "oled.h"
+#include "../mtrace.h"
 
-OLED  myOLED(SDA, SCL, 8);
+typedef int32_t fixpoint_t;
 
-extern uint8_t SmallFont[];
+static const fixpoint_t half = (5 << 16) / 10;
+static const fixpoint_t perspective = (1 << (16 - 6)); // 1/128
+// static const fixpoint_t PI = ((uint64_t)314159265ULL << 16) / 100000000;
 
-double vectors[8][3] = {{20, 20, 20},{-20, 20, 20},{-20, -20, 20},{20, -20, 20},{20, 20, -20},{-20, 20, -20},{-20, -20, -20},{20, -20, -20}};
-
-double perspective = 100.0f;
-int deltaX, deltaY, deltaZ, iter = 0;
-long stime, fps = 0, frames = 0;
-
-void setup()
+static fixpoint_t _fixpoint(int v)
 {
-  randomSeed(analogRead(0));
-
-  myOLED.begin();
-  myOLED.setFont(SmallFont);
+	return v << 16;
 }
 
-void loop()
+static fixpoint_t fixpoint(int v)
 {
-  stime = micros();
-  myOLED.clrScr();
-  drawVectors();
-  if (iter == 0)
-  {
-    deltaX = random(7) - 3;
-    deltaY = random(7) - 3;
-    deltaZ = random(7) - 3;
-    iter   = random(250) + 5;
-  }
-  rotateX(deltaX);
-  rotateY(deltaY);
-  rotateZ(deltaZ);
-  iter--;
-  fps += 1000000 / (micros()-stime);
-  frames++;
-  myOLED.printNumI(fps / frames, 0, 0, 3);  // Print average FPS on screen
-  myOLED.update();
+	if (v < 0)
+		return -_fixpoint(-v);
+	else
+		return _fixpoint(v);
 }
 
-int translateX(double x, double z)
+static int16_t _fixpoint_to_int(fixpoint_t v)
 {
-  return (int)((x + 64) + (z * (x / perspective)));
+	return (v + half) >> 16;
 }
 
-int translateY(double y, double z)
+static int16_t fixpoint_to_int(fixpoint_t v)
 {
-  return (int)((y + 32) + (z * (y / perspective)));
+	/* FIXME: do we need this? */
+	if (v < 0)
+		return -_fixpoint_to_int(-v);
+	else
+		return _fixpoint_to_int(v);
 }
 
-void rotateX(int angle)
+static fixpoint_t _x(fixpoint_t a, fixpoint_t b)
 {
-  double rad, cosa, sina, Yn, Zn;
- 
-  rad = angle * PI / 180;
-  cosa = cos(rad);
-  sina = sin(rad);
-  for (int i = 0; i < 8; i++)
-  {
-    Yn = (vectors[i][1] * cosa) - (vectors[i][2] * sina);
-    Zn = (vectors[i][1] * sina) + (vectors[i][2] * cosa);
-    vectors[i][1] = Yn;
-    vectors[i][2] = Zn;
-  }
+	bool neg = false;
+	fixpoint_t res;
+	uint64_t ax, bx;
+
+	if (a < 0) {
+		neg = true;
+		ax = -a;
+	} else {
+		ax = a;
+	}
+	if (b < 0) {
+		neg = (neg == false);
+		bx = -b;
+	} else {
+		bx = b;
+	}
+	res = ((ax * bx) + (1ULL << 15)) >> 16;
+	return neg ? -res : res;
 }
 
-void rotateY(int angle)
+static const int vectors_init[8][3] = {
+	{
+		20,
+		20,
+		20,
+	}, {
+		-20,
+		20,
+		20,
+	}, {
+		-20,
+		-20,
+		20,
+	}, {
+		20,
+		-20,
+		20,
+	}, {
+		20,
+		20,
+		-20,
+	}, {
+		-20,
+		20,
+		-20,
+	}, {
+		-20,
+		-20,
+		-20,
+	}, {
+		20,
+		-20,
+		-20,
+	}
+};
+
+static fixpoint_t vectors[8][3];
+
+// static void print_fixpoint(const char *str, fixpoint_t f)
+// {
+// 	bool neg = false;
+// 	if (f < 0) {
+// 		neg = true;
+// 		f = -f;
+// 	}
+// 	printf(str);
+// 	if (neg)
+// 		putchar('-');
+// 	printf("%d", f >> 16);
+// 	putchar('.');
+// 	printf("%03d\n", (f & 0xffff) * 1000 >> 16);
+// }
+
+static void rotateX(fixpoint_t cosa, fixpoint_t sina)
 {
-  double rad, cosa, sina, Xn, Zn;
- 
-  rad = angle * PI / 180;
-  cosa = cos(rad);
-  sina = sin(rad);
-  for (int i = 0; i < 8; i++)
-  {
-    Xn = (vectors[i][0] * cosa) - (vectors[i][2] * sina);
-    Zn = (vectors[i][0] * sina) + (vectors[i][2] * cosa);
-    vectors[i][0] = Xn;
-    vectors[i][2] = Zn;
-  }
+	fixpoint_t Yn, Zn;
+	int i;
+
+	for (i = 0; i < 8; i++) {
+		// print_fixpoint("y: ", vectors[i][1]);
+		// print_fixpoint("z: ", vectors[i][2]);
+		Yn = _x(vectors[i][1], cosa) - _x(vectors[i][2], sina);
+		Zn = _x(vectors[i][1], sina) + _x(vectors[i][2], cosa);
+		vectors[i][1] = Yn;
+		vectors[i][2] = Zn;
+	}
 }
 
-void rotateZ(int angle)
+static void rotateY(fixpoint_t cosa, fixpoint_t sina)
 {
-  double rad, cosa, sina, Xn, Yn;
- 
-  rad = angle * PI / 180;
-  cosa = cos(rad);
-  sina = sin(rad);
-  for (int i = 0; i < 8; i++)
-  {
-    Xn = (vectors[i][0] * cosa) - (vectors[i][1] * sina);
-    Yn = (vectors[i][0] * sina) + (vectors[i][1] * cosa);
-    vectors[i][0] = Xn;
-    vectors[i][1] = Yn;
-  }
+	fixpoint_t Xn, Zn;
+	int i;
+
+	for (i = 0; i < 8; i++) {
+		Xn = _x(vectors[i][0], cosa) - _x(vectors[i][2], sina);
+		Zn = _x(vectors[i][0], sina) + _x(vectors[i][2], cosa);
+		vectors[i][0] = Xn;
+		vectors[i][2] = Zn;
+	}
 }
 
-void drawVectors()
+static void rotateZ(fixpoint_t cosa, fixpoint_t sina)
 {
-  myOLED.drawLine(translateX(vectors[0][0], vectors[0][2]), translateY(vectors[0][1], vectors[0][2]), translateX(vectors[1][0], vectors[1][2]), translateY(vectors[1][1], vectors[1][2]));
-  myOLED.drawLine(translateX(vectors[1][0], vectors[1][2]), translateY(vectors[1][1], vectors[1][2]), translateX(vectors[2][0], vectors[2][2]), translateY(vectors[2][1], vectors[2][2]));
-  myOLED.drawLine(translateX(vectors[2][0], vectors[2][2]), translateY(vectors[2][1], vectors[2][2]), translateX(vectors[3][0], vectors[3][2]), translateY(vectors[3][1], vectors[3][2]));
-  myOLED.drawLine(translateX(vectors[3][0], vectors[3][2]), translateY(vectors[3][1], vectors[3][2]), translateX(vectors[0][0], vectors[0][2]), translateY(vectors[0][1], vectors[0][2]));
-  myOLED.drawLine(translateX(vectors[4][0], vectors[4][2]), translateY(vectors[4][1], vectors[4][2]), translateX(vectors[5][0], vectors[5][2]), translateY(vectors[5][1], vectors[5][2]));
-  myOLED.drawLine(translateX(vectors[5][0], vectors[5][2]), translateY(vectors[5][1], vectors[5][2]), translateX(vectors[6][0], vectors[6][2]), translateY(vectors[6][1], vectors[6][2]));
-  myOLED.drawLine(translateX(vectors[6][0], vectors[6][2]), translateY(vectors[6][1], vectors[6][2]), translateX(vectors[7][0], vectors[7][2]), translateY(vectors[7][1], vectors[7][2]));
-  myOLED.drawLine(translateX(vectors[7][0], vectors[7][2]), translateY(vectors[7][1], vectors[7][2]), translateX(vectors[4][0], vectors[4][2]), translateY(vectors[4][1], vectors[4][2]));
-  myOLED.drawLine(translateX(vectors[0][0], vectors[0][2]), translateY(vectors[0][1], vectors[0][2]), translateX(vectors[4][0], vectors[4][2]), translateY(vectors[4][1], vectors[4][2]));
-  myOLED.drawLine(translateX(vectors[1][0], vectors[1][2]), translateY(vectors[1][1], vectors[1][2]), translateX(vectors[5][0], vectors[5][2]), translateY(vectors[5][1], vectors[5][2]));
-  myOLED.drawLine(translateX(vectors[2][0], vectors[2][2]), translateY(vectors[2][1], vectors[2][2]), translateX(vectors[6][0], vectors[6][2]), translateY(vectors[6][1], vectors[6][2]));
-  myOLED.drawLine(translateX(vectors[3][0], vectors[3][2]), translateY(vectors[3][1], vectors[3][2]), translateX(vectors[7][0], vectors[7][2]), translateY(vectors[7][1], vectors[7][2]));
+	fixpoint_t Yn, Xn;
+	int i;
+
+	for (i = 0; i < 8; i++) {
+		Xn = _x(vectors[i][0], cosa) - _x(vectors[i][1], sina);
+		Yn = _x(vectors[i][0], sina) + _x(vectors[i][1], cosa);
+		vectors[i][0] = Xn;
+		vectors[i][1] = Yn;
+	}
+}
+
+int translateX(fixpoint_t x, fixpoint_t z)
+{
+	return fixpoint_to_int((x + fixpoint(64)) + _x(z, _x(x, perspective)));
+}
+
+int translateY(fixpoint_t y, fixpoint_t z)
+{
+	return fixpoint_to_int((y + fixpoint(32)) + _x(z, _x(y, perspective)));
+}
+
+static void draw(void)
+{
+	oled_drawLine(
+		translateX(vectors[0][0], vectors[0][2]),
+		translateY(vectors[0][1], vectors[0][2]),
+		translateX(vectors[1][0], vectors[1][2]),
+		translateY(vectors[1][1], vectors[1][2]));
+	oled_drawLine(
+		translateX(vectors[1][0], vectors[1][2]),
+		translateY(vectors[1][1], vectors[1][2]),
+		translateX(vectors[2][0], vectors[2][2]),
+		translateY(vectors[2][1], vectors[2][2]));
+	oled_drawLine(
+		translateX(vectors[2][0], vectors[2][2]),
+		translateY(vectors[2][1], vectors[2][2]),
+		translateX(vectors[3][0], vectors[3][2]),
+		translateY(vectors[3][1], vectors[3][2]));
+	oled_drawLine(
+		translateX(vectors[3][0], vectors[3][2]),
+		translateY(vectors[3][1], vectors[3][2]),
+		translateX(vectors[0][0], vectors[0][2]),
+		translateY(vectors[0][1], vectors[0][2]));
+	oled_drawLine(
+		translateX(vectors[4][0], vectors[4][2]),
+		translateY(vectors[4][1], vectors[4][2]),
+		translateX(vectors[5][0], vectors[5][2]),
+		translateY(vectors[5][1], vectors[5][2]));
+	oled_drawLine(
+		translateX(vectors[5][0], vectors[5][2]),
+		translateY(vectors[5][1], vectors[5][2]),
+		translateX(vectors[6][0], vectors[6][2]),
+		translateY(vectors[6][1], vectors[6][2]));
+	oled_drawLine(
+		translateX(vectors[6][0], vectors[6][2]),
+		translateY(vectors[6][1], vectors[6][2]),
+		translateX(vectors[7][0], vectors[7][2]),
+		translateY(vectors[7][1], vectors[7][2]));
+	oled_drawLine(
+		translateX(vectors[7][0], vectors[7][2]),
+		translateY(vectors[7][1], vectors[7][2]),
+		translateX(vectors[4][0], vectors[4][2]),
+		translateY(vectors[4][1], vectors[4][2]));
+	oled_drawLine(
+		translateX(vectors[0][0], vectors[0][2]),
+		translateY(vectors[0][1], vectors[0][2]),
+		translateX(vectors[4][0], vectors[4][2]),
+		translateY(vectors[4][1], vectors[4][2]));
+	oled_drawLine(
+		translateX(vectors[1][0], vectors[1][2]),
+		translateY(vectors[1][1], vectors[1][2]),
+		translateX(vectors[5][0], vectors[5][2]),
+		translateY(vectors[5][1], vectors[5][2]));
+	oled_drawLine(
+		translateX(vectors[2][0], vectors[2][2]),
+		translateY(vectors[2][1], vectors[2][2]),
+		translateX(vectors[6][0], vectors[6][2]),
+		translateY(vectors[6][1], vectors[6][2]));
+	oled_drawLine(
+		translateX(vectors[3][0], vectors[3][2]),
+		translateY(vectors[3][1], vectors[3][2]),
+		translateX(vectors[7][0], vectors[7][2]),
+		translateY(vectors[7][1], vectors[7][2]));
+}
+
+void init_3dcube(void)
+{
+	int i, j;
+
+	for (i = 0; i < 8; i++)
+		for (j = 0; j < 3; j++)
+			vectors[i][j] = fixpoint(vectors_init[i][j]);
+}
+
+void loop_3dcube(void)
+{
+	static int iter = 0;
+
+	if (iter++) {
+		rotateX((9962 << 16) / 10000, ( 872 << 16) / 10000); // 5
+		rotateY((9925 << 16) / 10000, (1219 << 16) / 10000); // 7
+		rotateZ((9816 << 16) / 10000, (1908 << 16) / 10000); // 11
+	}
+	oled_clrScr();
+	draw();
+	oled_update();
 }

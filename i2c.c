@@ -91,7 +91,7 @@ struct I2C_BB {
 	((I2C_SPEED_FAST((__PCLK__), (__SPEED__), (__DUTYCYCLE__)) & I2C_CCR_CCR) == 0U)? 1U : \
 	((I2C_SPEED_FAST((__PCLK__), (__SPEED__), (__DUTYCYCLE__))) | I2C_CCR_FS))
 
-#define I2C_FREQ  50000
+#define I2C_FREQ  90000
 
 void i2c_init(void)
 {
