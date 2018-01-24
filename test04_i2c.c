@@ -19,7 +19,7 @@ static void test(uint8_t cmd)
 
 int main(void)
 {
-	MTRACE("- %s", __TIMESTAMP__);
+	MTRACE("+ %s", __TIMESTAMP__);
 
 	i2c_init();
 	dwt_enable();

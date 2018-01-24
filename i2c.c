@@ -112,25 +112,25 @@ int i2c_write(uint8_t address, uint8_t *values, unsigned long values_length)
 	unsigned long i;
 
 	I2C1->CR1 |= I2C_CR1_START;
-	for (i = 0; I2C1->SR1 & I2C_SR1_SB; i++)
+	for (i = 0; !(I2C1->SR1 & I2C_SR1_SB); i++)
 		if (i > TIMEOUT)
 			return -1;
 
 	I2C1->DR = I2C_ADDR_WRITE(address);
-	for (i = 0; I2C1->SR1 & I2C_SR1_ADDR; i++)
+	for (i = 0; !(I2C1->SR1 & I2C_SR1_ADDR); i++)
 		if (i > TIMEOUT)
 			return -1;
 	I2C1->SR2;
 
 	for (; values_length; values_length--, values++) {
-		for (i = 0; I2C1->SR1 & I2C_SR1_TxE; i++) {
+		for (i = 0; !(I2C1->SR1 & I2C_SR1_TxE); i++) {
 			if (i > TIMEOUT)
 				return -1;
 		}
 		I2C1->DR = *values;
 	}
 
-	for (i = 0; (I2C1->SR1 & I2C_SR1_TxE) && (I2C1->SR1 & I2C_SR1_BTF); i++)
+	for (i = 0; !((I2C1->SR1 & I2C_SR1_TxE) && (I2C1->SR1 & I2C_SR1_BTF)); i++)
 		if (i > TIMEOUT)
 			return -1;
 
