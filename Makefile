@@ -20,7 +20,7 @@ LDLIBS  = -lgcc -lstm
 
 # tests (programs)
 ELFS = test01_uart_putc test02_uart_inout test03_stdio test04_i2c test05_blink \
-	test06_dwt test07_oled test08_3dcube
+	test06_dwt test07_oled test08_3dcube test09_font
 BINS = $(addsuffix .bin, $(ELFS))
 
 .PHONY: all clean

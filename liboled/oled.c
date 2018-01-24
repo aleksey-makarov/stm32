@@ -26,15 +26,9 @@
 #include "../mtrace.h"
 #include "../dwt.h"
 
-// #define LEFT	0
-// #define RIGHT	9999
-// #define CENTER	9998
-
 #define SSD1306_COMMAND		0x00
 #define SSD1306_DATA		0xC0
 #define SSD1306_DATA_CONTINUE	0x40
-
-#define RST_NOT_IN_USE	255
 
 // SSD1306 Commandset
 // ------------------
@@ -213,202 +207,72 @@ void oled_invPixel(uint16_t x, uint16_t y) {
 	}
 }
 
-// void OLED::invertText(bool mode)
-// {
-// 	if (mode==true)
-// 		cfont.inverted=1;
-// 	else
-// 		cfont.inverted=0;
-// }
+void oled_printChar(struct font *f, bool inverted, unsigned char c, int x, int y)
+{
+	if ((f->y_size % 8) == 0) {
+		int font_idx = ((c - f->offset) * (f->x_size * (f->y_size / 8))) + 4;
+		int rowcnt;
+		for (rowcnt = 0; rowcnt < (f->y_size / 8); rowcnt++) {
+			int cnt;
+			for(cnt = 0; cnt < f->x_size; cnt++) {
+				int b;
+				for (b = 0; b < 8; b++)
+					if ((f->font[font_idx+cnt+(rowcnt * f->x_size)] & (1 << b)) != 0)
+						if (!inverted)
+							oled_setPixel(x+cnt, y+(rowcnt*8)+b);
+						else
+							oled_clrPixel(x+cnt, y+(rowcnt*8)+b);
+					else
+						if (!inverted)
+							oled_clrPixel(x+cnt, y+(rowcnt*8)+b);
+						else
+							oled_setPixel(x+cnt, y+(rowcnt*8)+b);
+			}
+		}
+	} else {
+		int font_idx = ((c - f->offset) * ((f->x_size * f->y_size / 8))) + 4;
+		int cbyte = f->font[font_idx];
+		int cbit = 7;
+		int cx;
+		for (cx = 0; cx < f->x_size; cx++) {
+			int cy;
+			for (cy = 0; cy < f->y_size; cy++) {
+				if ((cbyte & (1<<cbit)) != 0)
+					if (!inverted)
+						oled_setPixel(x+cx, y+cy);
+					else
+						oled_clrPixel(x+cx, y+cy);
+				else
+					if (!inverted)
+						oled_clrPixel(x+cx, y+cy);
+					else
+						oled_setPixel(x+cx, y+cy);
+				cbit--;
+				if (cbit<0)
+				{
+					cbit=7;
+					font_idx++;
+					cbyte=f->font[font_idx];
+				}
+			}
+		}
+	}
+}
 
-// void oled_print_char(unsigned char c, int x, int y);
-// 
-// void oled_print(char *st, int x, int y)
-// {
-// 	unsigned char ch;
-// 	int stl;
-// 
-// 	stl = strlen(st);
-// //	if (x == RIGHT)
-// //		x = 128-(stl*cfont.x_size);
-// //	if (x == CENTER)
-// //		x = (128-(stl*cfont.x_size))/2;
-// 
-// 	for (int cnt=0; cnt<stl; cnt++)
-// 		oled_print_char(*st++, x + (cnt*(cfont.x_size)), y);
-// }
+void oled_print(struct font *f, bool inverted, char *st, int x, int y)
+{
+	int stl;
+	int cnt;
 
-// void OLED::print(String st, int x, int y)
-// {
-// 	char buf[st.length()+1];
-// 
-// 	st.toCharArray(buf, st.length()+1);
-// 	print(buf, x, y);
-// }
+	stl = strlen(st);
+	if (x == OLED_RIGHT)
+		x = 128 - (stl * f->x_size);
+	if (x == OLED_CENTER)
+		x = (128 - (stl * f->x_size)) / 2;
 
-// void oled_printNumI(long num, int x, int y, int length, char filler)
-// {
-// 	char buf[25];
-// 	char st[27];
-// 	bool neg=false;
-// 	int c=0, f=0;
-//   
-// 	if (num==0)
-// 	{
-// 		if (length!=0)
-// 		{
-// 			for (c=0; c<(length-1); c++)
-// 				st[c]=filler;
-// 			st[c]=48;
-// 			st[c+1]=0;
-// 		}
-// 		else
-// 		{
-// 			st[0]=48;
-// 			st[1]=0;
-// 		}
-// 	}
-// 	else
-// 	{
-// 		if (num<0)
-// 		{
-// 			neg=true;
-// 			num=-num;
-// 		}
-// 	  
-// 		while (num>0)
-// 		{
-// 			buf[c]=48+(num % 10);
-// 			c++;
-// 			num=(num-(num % 10))/10;
-// 		}
-// 		buf[c]=0;
-// 	  
-// 		if (neg)
-// 		{
-// 			st[0]=45;
-// 		}
-// 	  
-// 		if (length>(c+neg))
-// 		{
-// 			for (int i=0; i<(length-c-neg); i++)
-// 			{
-// 				st[i+neg]=filler;
-// 				f++;
-// 			}
-// 		}
-// 
-// 		for (int i=0; i<c; i++)
-// 		{
-// 			st[i+neg+f]=buf[c-i-1];
-// 		}
-// 		st[c+neg+f]=0;
-// 
-// 	}
-// 
-// 	print(st,x,y);
-// }
-// 
-// void oled_printNumF(double num, byte dec, int x, int y, char divider, int length, char filler)
-// {
-// 	char st[27];
-// 	boolean neg=false;
-// 
-// 	if (num<0)
-// 		neg = true;
-// 
-// 	_convert_float(st, num, length, dec);
-// 
-// 	if (divider != '.')
-// 	{
-// 		for (int i=0; i<sizeof(st); i++)
-// 			if (st[i]=='.')
-// 				st[i]=divider;
-// 	}
-// 
-// 	if (filler != ' ')
-// 	{
-// 		if (neg)
-// 		{
-// 			st[0]='-';
-// 			for (int i=1; i<sizeof(st); i++)
-// 				if ((st[i]==' ') || (st[i]=='-'))
-// 					st[i]=filler;
-// 		}
-// 		else
-// 		{
-// 			for (int i=0; i<sizeof(st); i++)
-// 				if (st[i]==' ')
-// 					st[i]=filler;
-// 		}
-// 	}
-// 
-// 	print(st,x,y);
-// }
-
-// void oled_print_char(unsigned char c, int x, int y)
-// {
-// 	if ((cfont.y_size % 8) == 0)
-// 	{
-// 		int font_idx = ((c - cfont.offset)*(cfont.x_size*(cfont.y_size/8)))+4;
-// 		for (int rowcnt=0; rowcnt<(cfont.y_size/8); rowcnt++)
-// 		{
-// 			for(int cnt=0; cnt<cfont.x_size; cnt++)
-// 			{
-// 				for (int b=0; b<8; b++)
-// 					if ((fontbyte(font_idx+cnt+(rowcnt*cfont.x_size)) & (1<<b))!=0)
-// 						if (cfont.inverted==0)
-// 							setPixel(x+cnt, y+(rowcnt*8)+b);
-// 						else
-// 							clrPixel(x+cnt, y+(rowcnt*8)+b);
-// 					else
-// 						if (cfont.inverted==0)
-// 							clrPixel(x+cnt, y+(rowcnt*8)+b);
-// 						else
-// 							setPixel(x+cnt, y+(rowcnt*8)+b);
-// 			}
-// 		}
-// 	}
-// 	else
-// 	{
-// 		int font_idx = ((c - cfont.offset)*((cfont.x_size*cfont.y_size/8)))+4;
-// 		int cbyte=fontbyte(font_idx);
-// 		int cbit=7;
-// 		for (int cx=0; cx<cfont.x_size; cx++)
-// 		{
-// 			for (int cy=0; cy<cfont.y_size; cy++)
-// 			{
-// 				if ((cbyte & (1<<cbit)) != 0)
-// 					if (cfont.inverted==0)
-// 						setPixel(x+cx, y+cy);
-// 					else
-// 						clrPixel(x+cx, y+cy);
-// 				else
-// 					if (cfont.inverted==0)
-// 						clrPixel(x+cx, y+cy);
-// 					else
-// 						setPixel(x+cx, y+cy);
-// 				cbit--;
-// 				if (cbit<0)
-// 				{
-// 					cbit=7;
-// 					font_idx++;
-// 					cbyte=fontbyte(font_idx);
-// 				}
-// 			}
-// 		}
-// 	}
-// }
-
-// void OLED::setFont(uint8_t* font)
-// {
-// 	cfont.font=font;
-// 	cfont.x_size=fontbyte(0);
-// 	cfont.y_size=fontbyte(1);
-// 	cfont.offset=fontbyte(2);
-// 	cfont.numchars=fontbyte(3);
-// 	cfont.inverted=0;
-// }
+	for (cnt = 0; cnt < stl; cnt++)
+		oled_printChar(f, inverted, *st++, x + (cnt * (f->x_size)), y);
+}
 
 void oled_drawHLine(int x, int y, int l)
 {

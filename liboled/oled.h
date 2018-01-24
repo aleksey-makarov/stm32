@@ -26,6 +26,11 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "font.h"
+
+#define OLED_LEFT	0
+#define OLED_RIGHT	9999
+#define OLED_CENTER	9998
 
 void oled_begin();
 void oled_update();
@@ -36,11 +41,8 @@ void oled_invert(bool mode);
 void oled_setPixel(uint16_t x, uint16_t y);
 void oled_clrPixel(uint16_t x, uint16_t y);
 void oled_invPixel(uint16_t x, uint16_t y);
-void oled_invertText(bool mode);
-void oled_print(char *st, int x, int y);
-// void oled_printNumI(long num, int x, int y, int length=0, char filler=' ');
-// void oled_printNumF(double num, byte dec, int x, int y, char divider='.', int length=0, char filler=' ');
-void oled_setFont(uint8_t* font);
+void oled_print(struct font *f, bool inverted, char *st, int x, int y);
+void oled_printChar(struct font *f, bool inverted, unsigned char c, int x, int y);
 void oled_drawBitmap(int x, int y, uint8_t* bitmap, int sx, int sy);
 void oled_drawLine(int x1, int y1, int x2, int y2);
 void oled_clrLine(int x1, int y1, int x2, int y2);
