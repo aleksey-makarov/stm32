@@ -25,6 +25,7 @@
 #include <string.h>
 #include "../mtrace.h"
 #include "../dwt.h"
+#include "../sizeof.h"
 
 #define SSD1306_COMMAND		0x00
 #define SSD1306_DATA		0xC0
@@ -68,8 +69,6 @@
 #define SSD1306_SET_DISPLAY_CLOCK_DIV_RATIO	0xD5
 #define SSD1306_SET_PRECHARGE_PERIOD		0xD9
 #define SSD1306_SET_VCOM_DESELECT		0xDB
-
-#define SIZEOF(a) (sizeof(a)/sizeof(a[0]))
 
 #define SCRBUF_SIZE 1024
 #define SCRBUF_CMD_SIZE (SCRBUF_SIZE + 1)
