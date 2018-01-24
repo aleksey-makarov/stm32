@@ -150,26 +150,11 @@ uint8_t init_cmds[] = {
 };
 
 void oled_begin(void) {
-	
-	MTRACE("+");
-
 	i2c_init();
-	dwt_enable();
-
+	// dwt_enable();
 	send_commands(init_cmds, SIZEOF(init_cmds));
-
 	oled_clrScr();
-	MTRACE("+ check");
-	{
-		unsigned int i;
-		for (i = 0; i < SIZEOF(scrbuf); i++)
-			if (scrbuf[i])
-				MTRACE("%3d: 0x%02x", i, (unsigned int)scrbuf[i]);
-	}
-	MTRACE("- check");
 	oled_update();
-
-	MTRACE("-");
 }
 
 void oled_clrScr() {
@@ -186,7 +171,7 @@ void oled_setBrightness(uint8_t value) {
 }
 
 void oled_invert(bool mode) {
-	if (mode==true)
+	if (mode == true)
 		_sendTWIcommand(SSD1306_INVERT_DISPLAY);
 	else
 		_sendTWIcommand(SSD1306_NORMAL_DISPLAY);

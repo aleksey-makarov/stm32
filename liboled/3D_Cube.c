@@ -45,8 +45,8 @@
 
 typedef int32_t fixpoint_t;
 
-static const fixpoint_t half = (5 << 16) / 10;
-static const fixpoint_t perspective = (1 << (16 - 6)); // 1/128
+static const fixpoint_t half = (1 << 15);
+static const fixpoint_t perspective = (1 << (16 - 6));
 // static const fixpoint_t PI = ((uint64_t)314159265ULL << 16) / 100000000;
 
 static fixpoint_t _fixpoint(int v)
