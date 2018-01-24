@@ -75,37 +75,50 @@
 #define SSD1306_SET_PRECHARGE_PERIOD		0xD9
 #define SSD1306_SET_VCOM_DESELECT		0xDB
 
-uint8_t scrbuf[1024];
+#define SIZEOF(a) (sizeof(a)/sizeof(a[0]))
+
+#define SCRBUF_SIZE 1024
+#define SCRBUF_CMD_SIZE (SCRBUF_SIZE + 1)
+static uint8_t scrbuf_cmd[SCRBUF_CMD_SIZE] = { SSD1306_DATA_CONTINUE, };
+static uint8_t * const scrbuf = scrbuf_cmd + 1;
 
 int _sendTWIcommand(uint8_t cmd) {
+	int err;
 	uint8_t v[2] = { 0, cmd };
+	uint32_t ts;
 
-	return i2c_write(0x3c, v, 2);
-}
+	ts = dwt_get_cycles();
+	err = i2c_write(0x3c, v, 2);
+	MTRACE("cmd: 0x%02x, time: %d ms", (unsigned int)cmd, dwt_ms_since(ts));
 
-void oled_update(void)
-{
-	_sendTWIcommand(SSD1306_SET_COLUMN_ADDR);
-	_sendTWIcommand(0);
-	_sendTWIcommand(127);
-	_sendTWIcommand(SSD1306_SET_PAGE_ADDR);
-	_sendTWIcommand(0);
-	_sendTWIcommand(7);
-	i2c_write(0x3c, scrbuf, 1024);
+	return err;
 }
 
 void send_commands(uint8_t *cmds, unsigned long length)
 {
-	for (; length; length--, cmds++) {
-		uint32_t ts = dwt_get_cycles();
+	for (; length; length--, cmds++)
 		_sendTWIcommand(*cmds);
-		MTRACE("0x%02x: %d ms", (unsigned int)*cmds, dwt_ms_since(ts));
-		{
-			int i;
-			for (i = 0; i < 1000000; i++)
-				;
-		}
-	}
+}
+
+uint8_t update_cmds[] = {
+	SSD1306_SET_COLUMN_ADDR,
+	0,
+	127,
+	SSD1306_SET_PAGE_ADDR,
+	0,
+	7,
+};
+
+void oled_update(void)
+{
+	uint32_t ts;
+	int err;
+
+	send_commands(update_cmds, SIZEOF(update_cmds));
+
+	ts = dwt_get_cycles();
+	err = i2c_write(0x3c, scrbuf_cmd, SCRBUF_CMD_SIZE);
+	MTRACE("update buffer: err: %d, time: %d ms", err, dwt_ms_since(ts));
 }
 
 uint8_t init_cmds[] = {
@@ -136,10 +149,7 @@ uint8_t init_cmds[] = {
 	SSD1306_DISPLAY_ON,
 };
 
-#define SIZEOF(a) (sizeof(a)/sizeof(a[0]))
-
 void oled_begin(void) {
-	// uint32_t ts;
 	
 	MTRACE("+");
 
@@ -148,20 +158,26 @@ void oled_begin(void) {
 
 	send_commands(init_cmds, SIZEOF(init_cmds));
 
-	MTRACE();
-
-	// oled_clrScr();
+	oled_clrScr();
+	MTRACE("+ check");
+	{
+		unsigned int i;
+		for (i = 0; i < SIZEOF(scrbuf); i++)
+			if (scrbuf[i])
+				MTRACE("%3d: 0x%02x", i, (unsigned int)scrbuf[i]);
+	}
+	MTRACE("- check");
 	oled_update();
 
 	MTRACE("-");
 }
 
 void oled_clrScr() {
-	memset(scrbuf, 0, 1024);
+	memset(scrbuf, 0, SCRBUF_SIZE);
 }
 
 void oled_fillScr() {
-	memset(scrbuf, 255, 1024);
+	memset(scrbuf, 255, SCRBUF_SIZE);
 }
 
 void oled_setBrightness(uint8_t value) {

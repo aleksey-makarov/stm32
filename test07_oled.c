@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: MIT
 
 #include "liboled/oled.h"
-#include <stdio.h>
-#include "mtrace.h"
-#include "dwt.h"
-#include "i2c.h"
 
 int main(void)
 {
