@@ -52,4 +52,4 @@ $(ELFS) : libstm.a
 	$(SIZE) $< > $@
 
 clean:
-	$(RM) -f *.o *.a *.bin *.size *.dis *.lst $(ELFS) ./libbsd/*.o
+	$(RM) -f *.o *.a *.bin *.size *.dis *.lst $(ELFS) ./liboled/*.o ./libbsd/*.o

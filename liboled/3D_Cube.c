@@ -47,7 +47,6 @@ typedef int32_t fixpoint_t;
 
 static const fixpoint_t half = (1 << 15);
 static const fixpoint_t perspective = (1 << (16 - 6));
-// static const fixpoint_t PI = ((uint64_t)314159265ULL << 16) / 100000000;
 
 static fixpoint_t _fixpoint(int v)
 {
@@ -56,18 +55,19 @@ static fixpoint_t _fixpoint(int v)
 
 static fixpoint_t fixpoint(int v)
 {
+	/* FIXME: do we need this? */
 	if (v < 0)
 		return -_fixpoint(-v);
 	else
 		return _fixpoint(v);
 }
 
-static int16_t _fixpoint_to_int(fixpoint_t v)
+static int _fixpoint_to_int(fixpoint_t v)
 {
 	return (v + half) >> 16;
 }
 
-static int16_t fixpoint_to_int(fixpoint_t v)
+static int fixpoint_to_int(fixpoint_t v)
 {
 	/* FIXME: do we need this? */
 	if (v < 0)
@@ -277,14 +277,10 @@ void init_3dcube(void)
 
 void loop_3dcube(void)
 {
-	static int iter = 0;
-
-	if (iter++) {
-		rotateX((9962 << 16) / 10000, ( 872 << 16) / 10000); // 5
-		rotateY((9925 << 16) / 10000, (1219 << 16) / 10000); // 7
-		rotateZ((9816 << 16) / 10000, (1908 << 16) / 10000); // 11
-	}
 	oled_clrScr();
 	draw();
 	oled_update();
+	rotateX((9962 << 16) / 10000, ( 872 << 16) / 10000); // 5
+	rotateY((9925 << 16) / 10000, (1219 << 16) / 10000); // 7
+	rotateZ((9816 << 16) / 10000, (1908 << 16) / 10000); // 11
 }
