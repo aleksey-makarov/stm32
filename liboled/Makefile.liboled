@@ -1,0 +1,3 @@
+LIBOLED_SRCS = oled.c
+LIBOLED_OBJS = $(LIBOLED_SRCS:%.c=%.o)
+

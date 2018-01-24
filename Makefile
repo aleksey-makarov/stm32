@@ -19,7 +19,8 @@ LDFLAGS = $(MCPU)     -ggdb -static -nostdlib -TSTM32F103C8.ld -L.
 LDLIBS  = -lgcc -lstm
 
 # tests (programs)
-ELFS = test01_uart_putc test02_uart_inout test03_stdio test04_i2c test05_blink test06_dwt
+ELFS = test01_uart_putc test02_uart_inout test03_stdio test04_i2c test05_blink \
+	test06_dwt test07_oled
 BINS = $(addsuffix .bin, $(ELFS))
 
 .PHONY: all clean
@@ -29,8 +30,11 @@ all: $(BINS)
 include ./libbsd/Makefile.libbsd
 LIBBSD_OBJS_P=$(addprefix ./libbsd/, $(LIBBSD_OBJS))
 
+include ./liboled/Makefile.liboled
+LIBOLED_OBJS_P=$(addprefix ./liboled/, $(LIBOLED_OBJS))
+
 # functions that may be shared between tests
-libstm.a: $(LIBBSD_OBJS_P) init.o rcc.o gpio.o uart.o dwt.o i2c.o
+libstm.a: $(LIBBSD_OBJS_P) $(LIBOLED_OBJS_P) init.o rcc.o gpio.o uart.o dwt.o i2c.o
 	$(AR) rcs $@ $^
 
 $(ELFS) : libstm.a
