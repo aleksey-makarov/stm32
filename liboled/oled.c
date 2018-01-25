@@ -209,7 +209,7 @@ void oled_invPixel(uint16_t x, uint16_t y) {
 void oled_printChar(struct font *f, bool inverted, unsigned char c, int x, int y)
 {
 	if ((f->y_size % 8) == 0) {
-		int font_idx = ((c - f->offset) * (f->x_size * (f->y_size / 8))) + 4;
+		int font_idx = ((c - f->offset) * (f->x_size * (f->y_size / 8)));
 		int rowcnt;
 		for (rowcnt = 0; rowcnt < (f->y_size / 8); rowcnt++) {
 			int cnt;
@@ -229,7 +229,7 @@ void oled_printChar(struct font *f, bool inverted, unsigned char c, int x, int y
 			}
 		}
 	} else {
-		int font_idx = ((c - f->offset) * ((f->x_size * f->y_size / 8))) + 4;
+		int font_idx = ((c - f->offset) * ((f->x_size * f->y_size / 8)));
 		int cbyte = f->font[font_idx];
 		int cbit = 7;
 		int cx;
