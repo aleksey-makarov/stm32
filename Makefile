@@ -20,7 +20,7 @@ LDLIBS  = -lgcc -lstm
 
 # tests (programs)
 ELFS = test01_uart_putc test02_uart_inout test03_stdio test04_i2c test05_blink \
-	test06_dwt test07_oled test08_3dcube test09_font
+	test06_dwt test07_oled test08_3dcube test09_font test11_am2301
 BINS = $(addsuffix .bin, $(ELFS))
 
 .PHONY: all clean
@@ -34,7 +34,8 @@ include ./liboled/Makefile.liboled
 LIBOLED_OBJS_P=$(addprefix ./liboled/, $(LIBOLED_OBJS))
 
 # functions that may be shared between tests
-libstm.a: $(LIBBSD_OBJS_P) $(LIBOLED_OBJS_P) init.o rcc.o gpio.o uart.o dwt.o i2c.o
+libstm.a: $(LIBBSD_OBJS_P) $(LIBOLED_OBJS_P) \
+	init.o rcc.o gpio.o uart.o dwt.o i2c.o am2301.o
 	$(AR) rcs $@ $^
 
 $(ELFS) : libstm.a

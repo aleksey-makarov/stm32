@@ -41,6 +41,29 @@ uint32_t dwt_get_cycles(void)
 
 unsigned long dwt_ms_since(uint32_t from)
 {
-	uint32_t to = DWT->CYCCNT;
+	uint32_t to = dwt_get_cycles();
 	return (to - from) / (RCC_CPU_CLK_FREQ / 1000);
+}
+
+unsigned long dwt_us_since(uint32_t from)
+{
+	uint32_t to = dwt_get_cycles();
+	return (to - from) / (RCC_CPU_CLK_FREQ / 1000000);
+}
+
+void dwt_delay_us(unsigned long delay)
+{
+	uint32_t from = dwt_get_cycles();
+	uint32_t to;
+
+	while (1) {
+		to = dwt_get_cycles();
+		if ((to - from) / (RCC_CPU_CLK_FREQ / 1000000) > delay)
+			break;
+	}
+}
+
+unsigned long dwt_us_between(uint32_t from, uint32_t to)
+{
+	return (to - from) / (RCC_CPU_CLK_FREQ / 1000000);
 }

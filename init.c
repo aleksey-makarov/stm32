@@ -36,10 +36,10 @@ void halt(void)
 	while (1) {
 		ts = dwt_get_cycles();
 		gpio_out(GPIOC, 13, 1);
-		while (dwt_ms_since(ts) < 100)
+		while (dwt_ms_since(ts) < 500)
 			;
 		gpio_out(GPIOC, 13, 0);
-		while (dwt_ms_since(ts) < 1000)
+		while (dwt_ms_since(ts) < 500)
 			;
 	}
 }
@@ -215,6 +215,9 @@ void reset_handler(void)
 
 	/* LED gpio */
 	gpio_setup(GPIOC, 13, GPIO_MODE_OUT_50MHz | GPIO_CNF_OUT_GPIO_OPEN);
+
+	/* one wire gpio */
+	gpio_setup(GPIOA,  7, GPIO_MODE_OUT_50MHz | GPIO_CNF_OUT_GPIO_OPEN);
 
 	uart_init();
 
