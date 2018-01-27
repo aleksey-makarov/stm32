@@ -1,8 +1,15 @@
 #include "am2301.h"
 #include "dwt.h"
-#include "mtrace.h"
 #include <stdbool.h>
 #include "gpio.h"
+
+// #define DEBUG
+
+#ifdef DEBUG
+# include "mtrace.h"
+#else
+# define MTRACE(...)
+#endif
 
 #define GPIODEV GPIOA
 #define GPIOPIN 7
@@ -147,17 +154,19 @@ int am2301_read(int *temp, int *hum) {
 		}
 	}
 
+#ifdef DEBUG
 	for (i = 0; i < 5; i++) {
 		printf("0x%02x ", (unsigned int)d[i]);
 	}
+	putchar('\n');
+#endif
 
 	if (((d[0] + d[1] + d[2] + d[3]) & 0xff) != d[4]) {
-		printf("parity error");
+		MTRACE("parity error");
 		err = -1;
-		// goto error;
+		goto error;
 	}
 
-	putchar('\n');
 
 	if (hum) {
 		*hum = d[0] << 8 | d[1];
