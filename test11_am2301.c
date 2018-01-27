@@ -23,7 +23,7 @@ int main(void)
 		 */
 		dwt_delay_us(2000000);
 		err = am2301_read(&temp, &hum);
-		MTRACE("err: %d, temp: %3d.%1d" DEGREE_SIGN "C, hum: %3d.%1d%%RH",
+		MTRACE("err: %d, temp: %d.%1d" DEGREE_SIGN "C, hum: %d.%1d%%RH",
 		       err, temp / 10, temp % 10, hum / 10, hum % 10);
 	}
 
