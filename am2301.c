@@ -67,7 +67,7 @@ static int read_byte(uint8_t *v)
 		if (err)
 			break;
 		if (b)
-			*v |= (i << i);
+			*v |= (1 << i);
 	}
 
 	return err;

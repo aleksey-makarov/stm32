@@ -5,6 +5,9 @@
 #include "am2301.h"
 #include "dwt.h"
 
+#define DEGREE_CELSIUS "\xe2\x84\x83"
+#define DEGREE_SIGN "\xc2\xb0"
+
 int main(void)
 {
 	int hum, temp;
@@ -15,12 +18,13 @@ int main(void)
 	am2301_init();
 	while (1) {
 		/*
-		 * Опрашивать можно не чаще чем раз в 3 секунды,
+		 * Опрашивать можно не чаще чем раз в 2 секунды,
 		 * задержка должна быть до первого опроса
 		 */
-		dwt_delay_us(4000000);
+		dwt_delay_us(2000000);
 		err = am2301_read(&temp, &hum);
-		MTRACE("err: %d, temp x10: %5d'C, hum x10: %5d%%RH", err, temp, hum);
+		MTRACE("err: %d, temp: %3d.%1d" DEGREE_SIGN "C, hum: %3d.%1d%%RH",
+		       err, temp / 10, temp % 10, hum / 10, hum % 10);
 	}
 
 	MTRACE("- %d", err);
